@@ -7,9 +7,10 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
+
+import com.calendar.MainActivity;
 import com.calendar.R;
 import com.calendar.utils.SV;
-import com.calendar.utils.StringUtils;
 
 import java.util.List;
 
@@ -23,6 +24,7 @@ public class CalendarAdapter extends BaseAdapter {
     private List<String> list;
     private Context context;
     private CalendarTime calendarTime;
+    private int mPosition = -1;
 
     public CalendarAdapter(Context context, List<String> list) {
         this.context = context;
@@ -45,7 +47,7 @@ public class CalendarAdapter extends BaseAdapter {
     }
 
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
+    public View getView(final int position, View convertView, ViewGroup parent) {
         final ViewHolder viewHolder;
         if (convertView == null) {
             convertView = LayoutInflater.from(context).inflate(R.layout.item_calendar, null);
@@ -58,14 +60,25 @@ public class CalendarAdapter extends BaseAdapter {
             SV.show(viewHolder.calendarShow, list.get(position));
         } else {
             viewHolder.calendarShow.setText("");
+//            viewHolder.calendarShow.setBackgroundResource(R.drawable.chose_calendar_four);
+        }
+        if (mPosition != position) {
             viewHolder.calendarShow.setBackgroundResource(R.drawable.chose_calendar_four);
+            viewHolder.calendarShow.setTextColor(context.getResources().getColor(R.color.color_333333));
         }
 
         convertView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (viewHolder.calendarShow.getText().length()>0){
+                if (viewHolder.calendarShow.getText().length() > 0) {
                     calendarTime.showData(Integer.parseInt(viewHolder.calendarShow.getText().toString()));
+                    if (MainActivity.etime >= MainActivity.stime || mPosition == -1) {
+                        mPosition = position;
+                        viewHolder.calendarShow.setTextColor(context.getResources().getColor(R.color.color_ffffff));
+                        viewHolder.calendarShow.setBackgroundResource(R.drawable.circle_da0428);
+                        notifyDataSetChanged();
+                    }
+
                 }
             }
         });

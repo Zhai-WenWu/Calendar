@@ -3,7 +3,6 @@ package com.calendar.calendar;
 import android.content.Context;
 import android.support.v4.view.ViewPager;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
@@ -12,10 +11,12 @@ import android.widget.TextView;
 
 
 import com.calendar.R;
+import com.calendar.calendar.YueViewPagerAdapter;
 import com.calendar.utils.SV;
 
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 
@@ -41,8 +42,11 @@ public class SelectCalendar extends RelativeLayout {
     private TextView calendarTimeTv;
     private ImageView calendarDown;
     private ViewPager viewpager_yue;
-    private int lastValue = -1;
-
+    private int lastValue = 96;
+    private String mTimeTv;
+    public static int mPosition = -1;
+    private int currentYear_;
+    private int currentMonth_;
 
     public SelectCalendar(Context context) {
         super(context);
@@ -65,32 +69,52 @@ public class SelectCalendar extends RelativeLayout {
         calendarDown = view.findViewById(R.id.calendar_down);
         viewpager_yue = view.findViewById(R.id.viewpager_yue);
         weeks = new ArrayList<>();
-        currentYear = CalendarUtils.getCurentYear();
-        currentMonth = CalendarUtils.getCurentMonth();
+//        weeks = WeeksData.getInstance().getWeeks();
+        currentYear = Calendar.getInstance().get(Calendar.YEAR);
+        currentMonth = Calendar.getInstance().get(Calendar.MONTH);
         nian = currentYear;
         yue = currentMonth;
-        SV.show(calendarTimeTv, currentYear + "-" + currentMonth);
+        currentYear_ = currentYear;
+        currentMonth_ = currentMonth;
+        SV.show(calendarTimeTv, currentYear + "年" + currentMonth + "月");
 
-        List<String> week = getWeek();
-        weeks.add(week);
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 96; i++) {
+            if (currentMonth_ != 1) {
+                currentMonth_ = currentMonth_ - i;
+            } else {
+                currentYear_ = currentYear_ - 1;
+                currentMonth_ = 12;
+            }
+            List<String> week1 = getWeek(currentYear_, currentMonth_);
+            weeks.add(0, week1);
+        }
+
+        for (int i = 0; i < 6; i++) {
             if (currentMonth != 12) {
                 currentMonth++;
             } else {
                 currentYear++;
                 currentMonth = 1;
             }
-            List<String> week1 = getWeek();
+            List<String> week1 = getWeek(currentYear, currentMonth);
             weeks.add(week1);
         }
 
+//        viewpager_yue.setOffscreenPageLimit(3);
         yueViewPagerAdapter = new YueViewPagerAdapter(context, weeks);
         viewpager_yue.setAdapter(yueViewPagerAdapter);
 
+        viewpager_yue.setCurrentItem(96);
+
         yueViewPagerAdapter.setOnTimeLisenter(new YueViewPagerAdapter.CalendarTime() {
             @Override
-            public void showData(int data) {
+            public void showData(int data, int position) {
                 calendarTime.showData(nian, yue, data);
+                if (!calendarTimeTv.getText().toString().equals(mTimeTv)) {
+                    yueViewPagerAdapter.notifyDataSetChanged();
+                }
+                mPosition = position;
+                mTimeTv = calendarTimeTv.getText().toString();
             }
         });
 
@@ -98,24 +122,38 @@ public class SelectCalendar extends RelativeLayout {
 
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-
             }
 
             @Override
             public void onPageSelected(int position) {
+
                 if (position == yueViewPagerAdapter.getmData().size() - 2) {
-                    for (int i = 0; i < 10; i++) {
+                    for (int i = 0; i < 6; i++) {
                         if (currentMonth != 12) {
                             currentMonth++;
                         } else {
                             currentYear++;
                             currentMonth = 1;
                         }
-                        List<String> week1 = getWeek();
+                        List<String> week1 = getWeek(currentYear, currentMonth);
                         weeks.add(week1);
                     }
                     yueViewPagerAdapter.notifyDataSetChanged();
                 }
+
+//                if (position == 1) {
+//                    for (int i = 0; i < 6; i++) {
+//                        if (currentMonth != 1) {
+//                            List<String> week1 = getWeek(currentYear, currentMonth - i);
+//                            weeks.add(0, week1);
+//                        } else {
+//                            currentYear_ = currentYear - 1;
+//                            List<String> week1 = getWeek(currentYear_, 12);
+//                            weeks.add(0, week1);
+//                        }
+//                    }
+//                    yueViewPagerAdapter.notifyDataSetChanged();
+//                }
 
 
                 if (position > lastValue) {
@@ -136,7 +174,7 @@ public class SelectCalendar extends RelativeLayout {
                     }
                 }
 
-                SV.show(calendarTimeTv, nian + "-" + yue);
+                SV.show(calendarTimeTv, nian + "年" + yue + "月");
                 lastValue = position;
             }
 
@@ -159,10 +197,10 @@ public class SelectCalendar extends RelativeLayout {
         });
     }
 
-    private List<String> getWeek() {
+    private List<String> getWeek(int currentYear, int currentMonth) {
         List<String> list = new ArrayList<>();
         try {
-            week = CalendarUtils.getWeek(currentYear, currentMonth, 1);
+            week = com.calendar.calendar.CalendarUtils.getWeek(currentYear, currentMonth, 1);
         } catch (ParseException e) {
             e.printStackTrace();
         }
@@ -171,7 +209,7 @@ public class SelectCalendar extends RelativeLayout {
                 list.add("0");    //添加空格
             }
         }
-        for (int i = 0; i < CalendarUtils.getDayByMonth(currentYear, currentMonth); i++) {
+        for (int i = 0; i < com.calendar.calendar.CalendarUtils.getDayByMonth(currentYear, currentMonth); i++) {
             list.add(i + 1 + "");    //添加本月多少号
         }
         return list;
